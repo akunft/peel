@@ -16,6 +16,7 @@
 package org.peelframework.core.beans.experiment
 
 import com.typesafe.config.{ConfigFactory, ConfigRenderOptions}
+import org.peelframework.core.beans.experiment.ExperimentSequence.{Parameter, CrossedParameters}
 import org.peelframework.core.beans.system.System
 
 /** A factory for experiment sequences.
@@ -42,6 +43,14 @@ class ExperimentSequence(
     paramName : String,
     paramVals : Seq[Any],
     prototypes: Seq[Experiment[System]]) = this(new ExperimentSequence.SimpleParameters(paramName, paramVals), prototypes)
+
+  def this(
+    crossParam: Seq[Parameter],
+    prototypes: Seq[Experiment[System]]) = this(new CrossedParameters(crossParam), prototypes)
+
+  def this(
+    crossParam: Seq[Parameter],
+    prototypes: Experiment[System]) = this(new CrossedParameters(crossParam), Seq(prototypes))
 
   private val experiments = {
     val opts = ConfigRenderOptions.defaults().setOriginComments(false)
