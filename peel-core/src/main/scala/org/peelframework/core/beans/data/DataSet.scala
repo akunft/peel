@@ -60,4 +60,23 @@ abstract class DataSet(val path: String, val dependencies: Set[System]) extends 
 
   /** Alias of name. */
   override def toString: String = resolve(path)
+
+  lazy private val hash: Int = {
+    var result = 17
+    result = 37 * result + fs.hashCode()
+    result = 37 * result + path.hashCode()
+    result
+  }
+
+  override def hashCode(): Int = hash
+
+  override def equals(that: scala.Any): Boolean = that match {
+    case o: DataSet =>
+      o.hashCode() == this.hashCode() &&
+        o.fs == this.fs &&
+        o.dependencies == this.dependencies &&
+        o.path == this.path
+
+    case _ => false
+  }
 }

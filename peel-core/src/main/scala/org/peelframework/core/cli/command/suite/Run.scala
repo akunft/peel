@@ -19,6 +19,7 @@ import java.lang.{System => Sys}
 
 import net.sourceforge.argparse4j.impl.Arguments
 import net.sourceforge.argparse4j.inf.{Namespace, Subparser}
+import org.peelframework.core.beans.data.DataSet
 import org.peelframework.core.beans.experiment.{Experiment, ExperimentSuite}
 import org.peelframework.core.beans.system.{Lifespan, System}
 import org.peelframework.core.cli.command.Command
@@ -27,6 +28,8 @@ import org.peelframework.core.graph.createGraph
 import org.peelframework.core.util.console._
 import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
+
+import scala.collection.mutable
 
 /** Execute all experiments in a suite. */
 @Service("suite:run")
@@ -84,6 +87,13 @@ class Run extends Command {
     val exps = runs.foldRight(List[Experiment[System]]())((r, es) =>
       if (es.isEmpty || es.head != r.exp) r.exp :: es
       else es)
+
+    val lastUsed = mutable.Map.empty[Experiment[System], mutable.Set[DataSet]]
+    for (exp <- exps; in <- exp.inputs) {// path = in.resolve(in.path)) {
+    val lastExprUsed = exps.lastIndexWhere(exp => exp.inputs.exists( ds => ds.path == in.path))
+      val paths = lastUsed.getOrElseUpdate(exps(lastExprUsed), mutable.Set.empty[DataSet])
+      paths add in
+    }
 
     // SUITE lifespan
     try {
@@ -182,6 +192,12 @@ class Run extends Command {
             logger.info("Cleaning output datasets")
             for (o <- e.outputs)
               o.clean()
+          }
+
+          logger.info("Removing unused materialized paths")
+          for (unusedInputs <- lastUsed.get(e); in <- unusedInputs; path = in.resolve(in.path)) {
+            in.fs.rmr(path)
+            logger.info(s"Removing unused materialized path '$path'")
           }
 
         } catch {
