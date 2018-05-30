@@ -125,7 +125,7 @@ object FlinkFastRExperiment {
       val fastrHome      = exp.config.getString("fastr.path.home")
       val javaHome       = exp.config.getString(s"system.${exp.runner.configKey}.config.yaml.env.java.home")
 
-      shell ! s"mx -p $fastrHome --java-home $javaHome Rflink ${command.trim} > $outFile 2> $errFile"
+      shell ! s"mx -p $fastrHome --java-home $javaHome scootr ${command.trim} > $outFile 2> $errFile"
     }
   }
 
